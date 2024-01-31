@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
-#To trigger the error, LANG=en_US.UTF-8
-
+import csv, email, smtplib, sys
 import datetime
-import email
-import smtplib
-import sys
 
 def usage():
     print("Send_reminders: Send meeting reminders")
     print()
     print("Invocation: ")
     print("    send_reminders 'date | Meeting Title | Emails' ")
+    return 1
+
 
 def dow(date):
     dateobj = datetime.datetime.strptime(date, r"%Y-%m-%d")
@@ -32,16 +30,27 @@ See you there.
     
     return message
 
-def send_message(message, emails):
+def get_name(contacts):
+    names = {}
+    with open(contacts) as file:
+        reader = csv.reader(file)
+        for row in reader:
+            names[row[0]] = row[1]
+    return names
+
+def send_message(date, title, emails, contacts):
     smtp = smtplib.SMTP('localhost')
+    names = get_name(contacts)
     for email in emails.split(','):
-        del message['To']
+        name = names[email]
+        name = get_name(contacts, email)
+        message = message_template(date, title, name)
         message['From'] = 'noreply@example.com'
         message['To'] = email
         smtp.send_message(message)
     smtp.quit()
     pass
-    
+
 def main():
     if len(sys.argv) < 2:
         return usage()
